@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shell for Client {{ client_id }}</title>
+  <style>
+    body { font-family: monospace; background: #000; color: #0f0; }
+    #output { 
+      white-space: pre-wrap; 
+      background: #111; 
+      padding: 10px; 
+      height: 400px; 
+      overflow-y: auto; 
+      border: 1px solid #333;
+      margin-bottom: 10px;
+    }
+    #commandForm, #killShellForm { margin-top: 10px; }
+    #commandInput { width: 80%; font-size: 16px; padding: 8px; }
+    #sendButton, #killButton { font-size: 16px; padding: 8px; }
+    #killButton { background: red; color: white; }
+  </style>
+</head>
+<body>
+  <h2>Shell for Client {{ client_id }}</h2>
+  <div id="output"></div>
+
+  <!-- Form to send commands to the shell -->
+  <form id="commandForm" method="POST" action="{{ url_for('shell_send_command', client_id=client_id) }}">
+    <input type="text" id="commandInput" name="command" placeholder="Enter command..." autocomplete="off">
+    <button type="submit" id="sendButton">Send</button>
+  </form>
+
+  <!-- New form to kill the shell -->
+  <form id="killShellForm" method="POST" action="{{ url_for('kill_shell_route', client_id=client_id) }}">
+    <button type="submit" id="killButton">Kill Shell</button>
+  </form>
+
+  <!-- JavaScript for server-sent events to stream shell output -->
+  <script>
+    const source = new EventSource("{{ url_for('stream_shell', client_id=client_id) }}");
+    source.onmessage = function(event) {
+      document.getElementById("output").textContent = event.data;
+    };
+
+    source.onerror = function(error) {
+      console.error("Error in SSE:", error);
+      source.close();
+    };
+  </script>
+</body>
+</html>

